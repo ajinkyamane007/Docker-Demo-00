@@ -1,0 +1,2 @@
+mysql -u root -h localhost --port 9099 --protocol=tcp -p
+

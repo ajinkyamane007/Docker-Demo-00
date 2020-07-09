@@ -1,0 +1,253 @@
+
+ Docker hub / Docker repository
+ 
+ Images dowloaded from repository .
+ Docker Compose - We can manage/run multiple containers at once.
+ Docker Swarm - Multiple request - Orchestration
+ Docker Sarm alternative to Kubernaties 
+
+ # image hub.docker.com
+
+ sudo docker image ls
+ sudo usermod -aG docker <username>   // Become Part of  Docker-group
+ id
+ docker image ls      // To show list of images
+ docker image prune   // To remove dangling images 
+
+ docker image pull hello-world
+ docker image inspect hello-world
+ docker image rm hello-world/Image ID
+ docker version
+
+ # container : To use image we wnat to create container
+
+ docker container ls  // only running container will show
+ docker container ls -a  // All containers running + non running
+ docker container create hello-world
+ docker container start containername/containerID
+ docker container run hello-world
+
+   docker container rm containername/containerID
+   docker container rm containername/containerID --force  
+ // You can't delete an image when container is running
+ // First stop the container then remove 
+       [ docker container stop containerId + docker container rm containerId ]
+      ** OR **
+       [ docker container rm containerId --force ] 
+ // It is not right way of delete image it will create orphaned Image
+ Ex : sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker image ls -a
+      REPOSITORY     TAG         IMAGE ID            CREATED             SIZE
+      app_server     latest      b8b8953c7213        7 months ago        936MB
+      <none>         <none>      b9e4f68b8875        7 months ago        936MB	 // Dangling image
+      <none>         <none>      713dae836df3        7 months ago        936MB   // Dangling image 
+
+  sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container ls -q  // Show running container
+>> f618aab89c9a
+   634ff7e35a80
+  sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container ls -q -a  // Show running + non-running container
+>> 242f7611bfcf
+   f618aab89c9a
+   634ff7e35a80
+
+## Linux shell scripting to Delete images
+   docker container rm $(docker container ls -q -a) --force
+
+## You can give name to the container
+   docker container run -itd --name mycont  ubuntu
+   docker container inspect mycont
+   sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container exec -it  mycont bash
+   root@253c271af375:/# hostname 
+ > 253c271af375
+
+
+## You can give name to the Container & Image
+  docker container run -itd --name mycont2 -h mycont2  ubuntu
+  sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container exec -it  mycont2 bash
+  root@mycont2:/# hostname 
+> mycont2
+
+ docker container stop containerID
+
+ docker container run -it ubantu:18.03  //2.54
+ docker container run -itd ubantu:18.03  //2.54 run at background/detached mode  (Demon)
+ docker container attach containerID
+ 
+  docker container run -itd ubuntu
+  docker container exec containerID date
+  docker container exec containerID ls
+
+  docker container exec 36 bash
+  docker container exec -it 36 bash  // Terminal open 
+  mkdir mydir
+  cd /mkdir
+  touch file1 file2 file3
+  ls
+
+## container are stored under : /var/lib/docker
+ 
+ sudo -i  // Root directoy open with all permission
+ root@sunbeam-HP-Laptop-15-da0xxx:~# cd /var/lib/docker
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker# ls
+ >> builder  buildkit  containers  image  network  overlay2  plugins  runtimes  swarm  tmp    trust  volumes
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker# cd containers/ 
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker/containers# ls
+ >>360bfe87c9fb40b76960e05c0804544fcd7f429daa16f52c3fb47bed839afeb3
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker/containers# cd 360bf/
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker/containers/360bfe87# ls
+ >> 360bf-json.log  config.v2.json  hostname  mounts  resolv.conf.hash checkpoints hostconfig.json hosts resolv.conf
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker/containers/360bf# cat hostname   // ie. ID of containers
+ >>360bfe87c9fb
+ root@sunbeam-HP-Laptop-15-da0xxx:/var/lib/docker/containers/360bf# cat resolv.conf // DNS entry
+ nameserver 192.168.225.1
+
+
+ ## Publishing port on container
+    sudo docker container run -itd --name=ws1 -p 8080:80  httpd
+         p:publish port,8080:host port,80:container port
+ 
+sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container ls
+CONTAINER ID    IMAGE   COMMAND              CREATED          STATUS           PORTS                  NAMES
+4e9275f90305    httpd   "httpd-foreground"   7 seconds ago    Up 4 seconds     0.0.0.0:8084->80/tcp   ws5
+c7d180c95168    httpd   "httpd-foreground"   17 seconds ago   Up 14 seconds    0.0.0.0:8083->80/tcp   ws4
+5d3ff20d7bd4    httpd   "httpd-foreground"   29 seconds ago   Up 26 seconds    0.0.0.0:8082->80/tcp   ws3
+b58f71cc4ede    httpd   "httpd-foreground"   41 seconds ago   Up 38 seconds    0.0.0.0:8081->80/tcp   ws2
+3bc17f085c36    httpd   "httpd-foreground"   14 minutes ago   Up 14 minutes    0.0.0.0:8080->80/tcp   ws1
+ 
+  // All are lestening on port no :80
+
+
+ ***
+sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker inspect --format='{{.Id}} {{.Parent}}' $(docker images --filter since=905954 -q)
+sha256:b8b8953c7213cd54129c76d97e1d1a072f01cfebe9b05136a9e33a74b2cb0044 sha256:b9e4f68b88756b832e2a6470df5661a5b3e64cf0d383bbe9df6a7923addce783
+b8b8953c,b9e4f68b : value is your dependent child image
+
+  sudo docker container run -itd --name=webserver -p 8080:80 httpd  // 8080 user defined Port to listen request & then transfer to POrt 80
+  sudo docker container run -itd --name=webserver -p 80 httpd       // Taking any random Port to listen request & then transfer to POrt 80
+
+  sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker container ls        // To check Randomly created Port no  
+  CONTAINER ID     IMAGE    COMMAND              CREATED              STATUS              PORTS                   NAMES
+  1750036e0639     httpd  "httpd-foreground"   About a minute ago   Up About a minute   0.0.0.0:32768->80/tcp   webserver
+  
+  curl http://localhost:32768   
+  curl http://localhost:8080    
+
+  docker container rm webserver --force  // To remove
+
+  ### Networking 
+  // Default networkes  
+ sunbeam@sunbeam-HP-Laptop-15-da0xxx:~$ docker network ls 
+  NETWORK ID       NAME        DRIVER      SCOPE
+  a4089ab68b34     bridge      bridge      local 
+  bceaa4265682     host        host        local
+  d72e35dea284     none        null        local
+
+ // By default container will use network bridge
+
+    docker network disconnect bridge client
+    docker network connect mynet-2 client
+    docker container exec -it client curl http://172.18.0.3   [Ip address]
+
+
+    docker network create  --subnet 172.30.0.0/24 --gateway 172.30.0.1 mynet-2
+    docker network inspect mynet-2
+
+ ## Host network
+    
+
+    docker container run -itd --name website --network mynet-2 httpd
+    docker container run -itd --name client --network mynet-2 radial/busyboxplus
+    docker container inspect website   
+ 
+--------------------------------------------------------------------------
+### Linux basic commands      
+
+cd ..
+cd .
+cd  path/
+mkdir test
+cd test/
+touch test1.txt test2.txt test3.txt  // Create 3 files
+cat test1.txt    // Open file to check containt
+exit  
+clear
+ctr + l 
+
+------------------------------------------------------------------------------
+
+   docker container stop test 
+   docker container start test
+   docker container run -itd --name test ubunt
+
+   docker container exec -it test bash
+   root@b155063d991a:/# ls
+   > bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+
+   docker volume ls
+   docker volume create my-volume
+   docker volume inspect my-volume   // Check(Default) => "Scope": "local"
+
+--------------------------------------------------------------------------------------------------
+
+   docker container run -itd --name=mydb -e MYSQL_ROOT_PASSWORD=manager mysql:5.7
+
+   docker container run -itd --name=mydb -e MYSQL_ROOT_PASSWORD=manager -p 3306:3306 mysql:5.7
+   docker container run -itd --name=hdb -e MYSQL_ROOT_PASSWORD=manager -p 3300:3306 mysql:5.7
+   sudo apt-get install -y mysql-client   // Download client version
+   
+   mysql -u root -p --protocol=tcp
+   create database hdb;
+   use hdb;
+   create table product (id integer primary key auto_increment,title text,price float);
+   insert into product (title,price) values ('samsung note-8',15000);
+   select * from product
+
+   docker container rm --force hdb  // Data wiil be removed
+   docker container run -itd --name=hdb -e MYSQL_ROOT_PASSWORD=manager -p 3300:3306 -v my-data-volume:/var/lib/mysql mysql:5.7
+   mysql -u root -p --protocol=tcp
+
+---------------------------------------------------------------------------------------------------------
+
+  mkdir website1
+  cd website1/
+  vim index.html
+
+  docker container run --name test -p 8080:80 -itd httpd
+  docker run  --name my-apache-app -p 8080:80 -itd -v "$PWD":/usr/local/apache2/htdocs/ httpd  
+  docker container run --name test2 -p 9091:80 -itd -v /home/sunbeam/DOCKER/website1:/usr/local/apache2/htdocs/  httpd
+
+  [ 192.168.1.101:9090 | 127.0.0.1:8080 ]
+
+
+--------------------------------------------------------------------------------------------------
+
+ ### Docker File  [http://127.0.0.1:8080/]
+
+docker image build -t mywebsite:v1 .    // . builed context
+docker container run -itd --name website -p 8080:80 mywebsite:v1
+
+docker container run --rm my-java-app  // rm temporarally run then remove/exite
+
+
+--------------------------------------------------------------
+
+### Vim Editor 
+ 
+ i   //To  write 
+ esc // To normal mode then 
+ :q  // To Quite
+ :w file.txt + esc + :q  // save file with name when fist time name is not given
+
+ Esc + v // visual mode
+ y // for copy/yant
+ p // for past
+ u // for undo
+
+ :set number  // Temp give num to lines
+
+
+-----------------------------------------------------------------
+
+
+
+
+
